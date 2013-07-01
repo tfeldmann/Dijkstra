@@ -9,24 +9,50 @@ from PySide.QtGui import *
 from PySide.QtCore import *
 from PySide.QtUiTools import *
 
+class Field(object):
+    pass
+
 class FieldView(QWidget):
     def __init__(self, parent):
         super(FieldView, self).__init__()
+        self.setMouseTracking(True)
+
         self.field = []
-        self.setFieldSize(10, 50)
+        self.selected = None
+        self.setFieldSize(20, 30)
 
     def setFieldSize(self, xSize, ySize):
+        self.xSize = xSize
+        self.ySize = ySize
         self.field = [[0]*ySize for _ in range(xSize)]
 
     def paintEvent(self, e):
         qp = QPainter()
         qp.begin(self)
-        qp.setPen(QColor(255, 255, 255))
-        qp.setBrush(QColor(255, 255, 184))
-        for y, row in enumerate(self.field):
-            for x, field in enumerate(row):
-                qp.fillRect(x*(1+10), y*(1+10), 10, 10, QColor(100, 100, 100))
+        self._paintField(qp)
         qp.end()
+
+    def _paintField(self, qp):
+        normalColor = QColor(0, 0, 0, 0)
+        hoverColor = QColor(255, 255, 255, 100)
+        rectWidth = self.width() / self.xSize
+        rectHeight = self.height() / self.ySize
+
+        for x, row in enumerate(self.field):
+            for y, field in enumerate(row):
+                color = normalColor
+                if self.selected != None and x == self.selected.x() and y == self.selected.y():
+                    color = hoverColor
+                qp.fillRect(x*rectWidth, y*rectHeight,
+                    rectWidth, rectHeight, color)
+
+    def mouseMoveEvent(self, m):
+        self.selected = self._itemAtCoordinates(m.pos())
+        self.update()
+
+    def _itemAtCoordinates(self, pos):
+        return QPoint(pos.x() * self.xSize / self.width(),
+            pos.y() * self.ySize / self.height())
 
 
 class App(QWidget):
